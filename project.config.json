@@ -10,8 +10,8 @@
 		"preloadBackgroundData": false,
 		"minified": true,
 		"newFeature": true,
-		"autoAudits": false,
 		"coverView": true,
+		"autoAudits": false,
 		"showShadowRootInWxmlPanel": true,
 		"scopeDataCheck": false,
 		"checkInvalidKey": true,
@@ -26,7 +26,7 @@
 		"userConfirmedUseCompilerModuleSwitch": false
 	},
 	"compileType": "miniprogram",
-	"libVersion": "2.0.4",
+	"libVersion": "2.10.4",
 	"appid": "wx1b56b55580852c0a",
 	"projectname": "miniprogram_study",
 	"debugOptions": {
