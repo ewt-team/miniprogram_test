@@ -26,55 +26,76 @@ class c_gClient {
     this.host = host;
     this.path = path;
     // 连接实例
-    this.link = null;
-    // 日志
-    console.debug('[gClinet] init, urlFull: '+this.urlFull);
+    this.socket = null;
   }
 
   /** === 小程序事件 === */
   // 显示时，建立连接
   onShow() {
     // 已有连接，不再继续
-    if (this.link) return;
+    if (this.socket) return;
     // 建立连接，附带生成的sessionId
-    const link = this.link = io(this.host,{
+    const socket = this.socket = io(this.host,{
       path:this.path,
       query:{
         weappSid:this.sessionId
       }
     });
     // 事件订阅
-    link.on('connect',()=>{
-      console.log('[gClient Link] connect');
-    })
-    link.on('sessionInfo',(...a)=>{
-      console.log('sessionInfo')
-      this.evt_sessionInfo(...a)
-    });
+    socket.on('connect',()=>console.debug('[gClient socket] connect'));
+    socket.on('sessionInfo',(...a)=>this.evt_sessionInfo(...a));
   }
-
   // 隐藏时，关闭连接
   onHide() {
     // 没有连接，不再继续
-    if (!this.link) return;
+    if (!this.socket) return;
 
     // 关闭，标记未Null
-    this.link.close();
-    this.link = null;
+    this.socket.close();
+    this.socket = null;
   }
 
   /** === 后台交互事件 === */
-
   // 登录信息更新
   evt_sessionInfo(sessionInfo){
-    debugger
-        // 调用登录接口
-        wx.login({
-          success: res => {
-            console.debug('[login_success] res.code: ' + res.code);
-            this.linkBuild(res.code);
+    console.debug('[evt_sessionInfo] 更新')
+    console.debug(sessionInfo);
+    // 如果没有小程序凭据，调用微信接口获取code
+    if (!sessionInfo.ticketDict.weapp) {
+      console.debug('[evt_sessionInfo] 缺少weapp凭据(openid)，尝试调用微信接口获取code')
+      // 调用登录接口
+      wx.login({
+        success: res => {
+          if(res.code){
+            console.debug('[evt_sessionInfo] wx.login 成功，获取到code: ' + res.code);
+            this.apiCall('setTicketWeapp',{code:res.code},(err,result)=>{
+              debugger
+            })
           }
-        })
+          else {
+            console.debug('[evt_sessionInfo] wx.login 失败，无res.code，errMsg: ' + res.errMsg);
+          }
+        },
+        fail: res => {
+          console.debug('[evt_sessionInfo] wx.login 失败');
+        }
+      })
+    }
+  }
+
+  /** === 对外方法 === */
+  /* ====== 对外方法 ====== */
+    /**
+     * API调用方法
+     * @param {Object,String} apiInfo 请求接口
+     * @param {Object} apiJson 
+     * @param {*} callback
+     */
+    apiCall(apiInfo,apiJson,callback){
+      /* 调用请求 */
+      this.socket.emit('apiJson',apiInfo,apiJson,(err,json)=>callback(err,json));
+      /* 若没有callback，反馈Promise，构建callback函数 */
+      if(!callback) return new Promise(resolve=>callback=(...all)=>resolve(all))
   }
 }
 
